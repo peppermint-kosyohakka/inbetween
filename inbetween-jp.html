@@ -1,0 +1,1496 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>古い無線機の信号</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Saira+Condensed:wght@500;700&family=Share+Tech+Mono&display=swap">
+<style>
+/* 布局：中间是旧电台面板和发报练习，老莫的聊天窗口固定在页面最右侧；窄屏时上下堆叠。
+   整体是一个刻意的单一深色画面（旧军用收发信机的橄榄灰面板 + 琥珀色显示），不跟随系统主题。 */
+:root{
+  --desk:#161713;
+  --panel:#3a3f36; --panel-hi:#4b5246; --panel-lo:#2a2e27;
+  --ink:#ece6d3; --ink-dim:#a9a690;
+  --lamp:#ffb23e; --lamp-dim:#6e4c1b;
+  --glass:#120f08; --paper:#d8cfae; --paper-ink:#241d10;
+  --alert:#ea6b57; --ok:#98c883; --line:#2f332a; --card:#1f221c;
+  --f-label:"Saira Condensed","Noto Sans JP",sans-serif;
+  --f-mono:"Share Tech Mono","Noto Sans JP",ui-monospace,Menlo,Consolas,monospace;
+  --f-body:"Noto Sans JP","Hiragino Sans","Yu Gothic","Meiryo",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--desk)}
+body{
+  background:var(--desk);color:var(--ink);
+  font:15px/1.65 var(--f-body);
+  padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+button{font:inherit;color:inherit}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px 24px;align-items:start}
+.top{grid-column:1/-1;display:grid;gap:6px;min-width:0}
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0;width:min(760px,100%);justify-self:center}.main>*{min-width:0}
+@media (max-width:760px){.wrap{grid-template-columns:minmax(0,1fr)}}
+
+.kicker{font:700 13px/1 var(--f-label);letter-spacing:.2em;color:var(--lamp);text-transform:uppercase}
+h1{font:700 clamp(32px,6vw,48px)/1.05 var(--f-label);letter-spacing:.03em;margin:4px 0 0;text-wrap:balance}
+.lede{margin:4px 0 0;color:var(--ink-dim);max-width:60ch}
+.obj{margin:10px 0 0;display:flex;gap:10px;align-items:flex-start;padding:10px 14px;background:#1f211c;border-left:3px solid var(--lamp);max-width:80ch}
+.obj .dot{flex:none;width:8px;height:8px;margin-top:9px;border-radius:50%;background:var(--lamp);box-shadow:0 0 8px var(--lamp);animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.35}}
+
+/* 电台面板 */
+.set{position:relative;padding:16px;border-radius:10px;border:1px solid #20231d;
+  background:linear-gradient(var(--panel-hi),var(--panel) 10%,var(--panel-lo));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 18px 40px rgba(0,0,0,.5)}
+.screw{position:absolute;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#7a8070,#22251f);box-shadow:0 0 0 1px #15170f}
+.screw::after{content:"";position:absolute;left:1px;right:1px;top:4px;height:1px;background:#15170f;transform:rotate(35deg)}
+.tl{top:7px;left:7px}.tr{top:7px;right:7px}.bl{bottom:7px;left:7px}.br{bottom:7px;right:7px}
+.plate{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 10px 14px}
+.brand{display:grid;line-height:1.1}
+.brand b{font:700 26px/1 var(--f-label);letter-spacing:.14em}
+.brand span{font:500 12px/1.4 var(--f-label);letter-spacing:.12em;color:var(--ink-dim)}
+.plate-r{display:flex;align-items:center;gap:10px}
+.lab{font:500 12px/1 var(--f-label);letter-spacing:.16em;color:var(--ink-dim);text-transform:uppercase}
+.pwr{width:44px;height:44px;border-radius:50%;border:2px solid #14160f;cursor:pointer;display:grid;place-items:center;
+  background:radial-gradient(circle at 35% 30%,#6a7160,#2b2f26);box-shadow:0 3px 0 #15170f,0 4px 10px rgba(0,0,0,.5)}
+.pwr:active{transform:translateY(2px);box-shadow:0 1px 0 #15170f}
+.pwr .lamp{width:12px;height:12px;border-radius:50%;background:#3a2a10;box-shadow:inset 0 0 0 1px #000}
+.pwr.on .lamp{background:var(--lamp);box-shadow:0 0 10px var(--lamp),0 0 0 1px #000}
+.textbtn{background:transparent;border:1px solid #6b7260;color:var(--ink);border-radius:6px;padding:5px 10px;cursor:pointer;font:500 13px/1 var(--f-label);letter-spacing:.12em}
+.textbtn:hover{background:#4b5246}
+:focus-visible{outline:2px solid var(--lamp);outline-offset:2px}
+
+.display{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:14px;align-items:center;padding:12px 14px;border-radius:6px;
+  background:var(--glass);border:1px solid #000;box-shadow:inset 0 0 20px rgba(0,0,0,.85),0 1px 0 rgba(255,255,255,.06)}
+@media (max-width:520px){.display{grid-template-columns:minmax(0,1fr)}.meter{max-width:170px}}
+.freq{font:400 clamp(38px,10vw,56px)/1 var(--f-mono);color:var(--lamp-dim);letter-spacing:.04em;white-space:nowrap}
+.freq small{font-size:15px;margin-left:.5em;color:var(--ink-dim);letter-spacing:.1em}
+.display.on .freq{color:var(--lamp);text-shadow:0 0 14px rgba(255,178,62,.45)}
+.modes{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chip{font:500 12px/1 var(--f-label);letter-spacing:.14em;padding:5px 8px;border-radius:3px;border:1px solid #3b3318;color:#6e5a2a}
+.display.on .chip.cw{color:var(--lamp);border-color:var(--lamp-dim)}
+.chip.on{color:#1a1204;background:var(--lamp);border-color:var(--lamp);box-shadow:0 0 10px rgba(255,178,62,.5)}
+.chip.tx.on{background:var(--alert);border-color:var(--alert);box-shadow:0 0 10px rgba(234,107,87,.55)}
+.meter{width:100%;display:block}
+.meter .arc{fill:none;stroke:var(--lamp-dim);stroke-width:1.5}
+.meter .tk{stroke:var(--lamp-dim);stroke-width:1.2}
+.meter .tx{fill:var(--lamp-dim);font:10px var(--f-mono);text-anchor:middle}
+.meter .needle{stroke:var(--lamp);stroke-width:2;stroke-linecap:round}
+.meter .hub{fill:var(--lamp-dim)}
+.display.on .meter .arc,.display.on .meter .tk{stroke:#a9823c}
+.display.on .meter .tx{fill:#a9823c}
+
+/* 纸带 */
+.tapewrap{margin-top:14px}
+.tapewrap .lab{display:flex;justify-content:space-between;gap:10px;margin:0 2px 6px}
+.tapewrap .lab i{font-style:normal;text-transform:none;letter-spacing:.04em;font-family:var(--f-body);font-size:12px}
+.tape{border-radius:3px;background:linear-gradient(#ddd5b6,var(--paper));color:var(--paper-ink);font-family:var(--f-mono);box-shadow:inset 0 2px 6px rgba(0,0,0,.3)}
+.tape-scroll{overflow-x:auto;padding:10px 12px 8px;min-height:100px;cursor:grab;scrollbar-color:#8f8668 #cfc6a4;overscroll-behavior-x:contain}
+.tape-scroll.drag{cursor:grabbing;user-select:none}
+.tape-in{display:flex;align-items:flex-end;width:max-content;min-width:100%}
+.tc{display:flex;flex-direction:column;align-items:center;padding:0 5px}
+.tm{font-size:16px;letter-spacing:.05em;min-height:1.5em;white-space:pre}
+.td{font-size:22px;line-height:1.3;min-height:1.3em;color:#7a2f12}
+.td.locked{color:#8f8668}
+.tw{flex:none;width:18px}
+.ts{flex:none;width:2px;align-self:stretch;margin:0 12px;background:repeating-linear-gradient(#8f8668 0 4px,transparent 4px 8px)}
+.tape-empty{align-self:center;color:#8f8668;font:13px var(--f-body)}
+
+/* 控件 */
+.ctl{margin-top:16px;display:grid;gap:6px}
+.ctl-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.ctl-h .note{font-size:13px;color:var(--ink-dim)}
+.dialbox{padding:0 4px}
+.ticks{height:8px;margin-top:6px;border-right:1px solid var(--ink-dim);
+  background:linear-gradient(90deg,var(--ink-dim) 1px,transparent 1px) 0 0/calc(100% / 40) 100% repeat-x}
+.ticks.major{height:15px;margin-top:0;background:linear-gradient(90deg,var(--ink) 1px,transparent 1px) 0 0/calc(100% / 4) 100% repeat-x}
+.nums{display:flex;justify-content:space-between;font:11px var(--f-mono);color:var(--ink-dim);margin:0 -14px 0 -14px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:44px;margin:0;background:transparent;cursor:ew-resize}
+input[type=range]::-webkit-slider-runnable-track{height:6px;border-radius:3px;background:#10110e;box-shadow:inset 0 1px 2px #000}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:40px;margin-top:-17px;border-radius:2px;background:var(--lamp);box-shadow:0 0 10px rgba(255,178,62,.6),0 0 0 2px #2a1c08}
+input[type=range]::-moz-range-track{height:6px;border-radius:3px;background:#10110e}
+input[type=range]::-moz-range-thumb{width:10px;height:40px;border:0;border-radius:2px;background:var(--lamp);box-shadow:0 0 0 2px #2a1c08}
+input[type=range]:disabled{cursor:not-allowed}
+input[type=range]:disabled::-webkit-slider-thumb{background:#8a7a58;box-shadow:0 0 0 2px #2a1c08}
+input[type=range]:disabled::-moz-range-thumb{background:#8a7a58}
+.row2{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 18px;align-items:center;margin-top:10px}
+.fine{display:flex;gap:8px}
+.vol{display:flex;align-items:center;gap:10px;min-width:0}
+.vol input{height:30px}
+.vol input::-webkit-slider-thumb{height:22px;width:12px;margin-top:-8px}
+.vol input::-moz-range-thumb{height:22px;width:12px}
+@media (max-width:520px){.row2{grid-template-columns:minmax(0,1fr)}}
+.textbtn:disabled{opacity:.4;cursor:not-allowed}
+
+.key{margin-top:16px;width:100%;min-height:66px;border-radius:8px;border:1px solid #14160f;cursor:pointer;
+  font:700 18px/1.2 var(--f-label);letter-spacing:.16em;color:var(--ink);touch-action:none;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(#5d6554,#3f4439);box-shadow:0 6px 0 #1b1e17,0 10px 16px rgba(0,0,0,.5)}
+.key small{display:block;font:500 12px/1.3 var(--f-body);letter-spacing:.04em;color:var(--ink-dim)}
+.key.down{transform:translateY(4px);box-shadow:0 2px 0 #1b1e17;background:linear-gradient(#e0b45a,#b98524);color:#1b1204}
+.key.down small{color:#4a3510}
+.key.off{opacity:.45;cursor:not-allowed}
+
+/* 发报练习 */
+.send,.end{padding:16px;border-radius:10px;background:#22251f;border:1px solid var(--line)}
+.send h2,.end h2{margin:0 0 10px;font:700 18px/1.2 var(--f-label);letter-spacing:.14em}
+#tgtRow{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:flex-end}
+.ltr{font:400 26px/1.3 var(--f-mono);min-width:1.05em;text-align:center;color:var(--ink-dim);border-bottom:2px solid transparent}
+.ltr.cur{color:var(--lamp);border-bottom-color:var(--lamp)}
+.ltr.done{color:var(--ok)}
+.gap{width:14px}
+#patRow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;min-height:56px;margin-top:10px}
+#patRow .big{font:400 34px/1 var(--f-mono);margin-right:8px;min-width:1ch}
+.sym{display:inline-block;background:var(--ink);flex:none}
+.sym.dot{width:12px;height:12px;border-radius:50%}
+.sym.dash{width:36px;height:12px;border-radius:6px}
+.sym.ghost{opacity:.3}
+.sym.ok{background:var(--ok)}
+.sym.bad{background:var(--alert)}
+#patRow.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.press{position:relative;height:12px;margin-top:8px;border-radius:6px;background:#10110e;overflow:hidden}
+.press::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--ink-dim)}
+#fill{height:100%;width:0;background:var(--lamp)}
+#fill.dash{background:var(--ok)}
+.pl{display:flex;justify-content:space-between;font-size:12px;color:var(--ink-dim);margin-top:4px}
+#sendMsg{min-height:1.7em;margin:10px 0 0;font-size:14px}
+#sendMsg.err{color:var(--alert)}
+#sendMsg.good{color:var(--ok)}
+.opts{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-dim);align-items:center}
+.opts select{background:#10110e;color:var(--ink);border:1px solid #4b5246;border-radius:5px;padding:4px 6px;font:inherit}
+.opts label{display:flex;gap:6px;align-items:center}
+
+/* 聊天 */
+.phone{position:sticky;top:16px;display:flex;flex-direction:column;max-height:min(640px,calc(100vh - 32px));overflow:hidden;border-radius:14px;background:var(--card);border:1px solid var(--line);min-width:0}
+@media (max-width:760px){.phone{position:static;max-height:560px}}
+.ph-h{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#5b6350;font-weight:700}
+.ph-h b{display:block;line-height:1.2}
+.ph-h span{font-size:12px;color:var(--ink-dim)}
+#msgs{flex:1;min-height:200px;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.sys{align-self:center;text-align:center;font-size:12px;color:var(--ink-dim);max-width:90%}
+.bub{max-width:88%;padding:8px 12px;border-radius:14px;overflow-wrap:anywhere}
+.bub.mo{align-self:flex-start;background:#2e332a;border-top-left-radius:4px}
+.bub.me{align-self:flex-end;background:#cfc08c;color:#1c1a10;border-top-right-radius:4px}
+.bub.typing{color:var(--ink-dim);letter-spacing:.2em}
+#choices{display:flex;flex-direction:column;gap:8px;padding:10px 14px 14px;border-top:1px solid var(--line)}
+#choices:empty{display:none}
+.choice{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid #5a6152;background:transparent;cursor:pointer}
+.choice:hover{background:#2e332a}
+
+
+.wrap{grid-template-columns:minmax(0,1fr) min(760px,100%) minmax(300px,1fr)}
+.main{grid-column:2}
+.phone{grid-column:3;justify-self:end;width:min(340px,100%)}
+@media (max-width:1100px){.wrap{grid-template-columns:minmax(0,1fr)}.main{grid-column:1}.phone{grid-column:1;justify-self:stretch;width:auto;position:static;max-height:560px}}
+.phone{height:min(640px,calc(100vh - 32px));max-height:none}
+.phone.min{height:auto}
+#msgs{min-height:0;scroll-behavior:auto}
+#choices,#choices:empty{display:flex;flex-direction:column;gap:8px;flex:none;height:128px;overflow-y:auto;padding:10px 14px;border-top:1px solid var(--line);background:#1a1d17}
+#choices:empty::before{content:"まだ送るメッセージはありません";margin:auto;color:var(--ink-dim);font-size:13px}
+#choices .choice:first-child{margin-top:auto}
+#choices .choice:last-child{margin-bottom:auto}
+.choice{flex:none}
+@media (max-width:1100px){.phone{height:520px}.phone.min{height:auto}}
+.vol .lab{white-space:nowrap}
+.lang{position:fixed;top:max(12px,env(safe-area-inset-top,0px));left:max(16px,env(safe-area-inset-left,0px));z-index:37}
+.lang>.textbtn{background:#24271f;padding:8px 12px}
+.langmenu{position:absolute;top:100%;left:0;margin-top:6px;min-width:150px;padding:4px;border-radius:8px;background:#24271f;border:1px solid #3a3f36;box-shadow:0 12px 30px rgba(0,0,0,.5)}
+.langmenu a{display:block;padding:9px 12px;border-radius:6px;color:var(--ink);text-decoration:none;cursor:pointer}
+.langmenu a:hover{background:#2e332a}
+.langmenu a.cur{color:var(--lamp);cursor:default}
+.langmenu a.cur::after{content:" \2713"}
+@media (max-width:1100px){.lang{position:relative;top:auto;left:auto;display:block;width:max-content;margin:0 0 12px}}
+@media (max-width:1100px){.wrap{padding-top:40px}}
+.booktab{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:36;background:#24271f;padding:10px 14px}
+.bookpanel{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + 52px);width:min(400px,calc(100vw - 32px));max-height:min(62vh,540px);overflow:auto;z-index:35;padding:16px;border-radius:10px;background:#24271f;border:1px solid #3a3f36;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.bookpanel header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.bookpanel h2{margin:0;font:700 20px/1.2 var(--f-label);letter-spacing:.14em}
+.bookpanel p{margin:0 0 8px;font-size:13px;color:var(--ink-dim)}
+.toast{bottom:calc(max(16px,env(safe-area-inset-bottom,0px)) + 52px)}
+.plate{flex-wrap:wrap}
+.plate-r{flex-wrap:wrap;justify-content:flex-end}
+.brand{min-width:0}
+@media (max-width:520px){.plate{margin-inline:6px}.brand span{display:none}}
+.tapebar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--ink-dim)}
+.tapebar label{display:flex;gap:6px;align-items:center}
+.tday{flex:none;align-self:center;margin:0 10px;padding:2px 8px;border:1px solid #8f8668;border-radius:3px;font:700 12px var(--f-label);letter-spacing:.14em;color:#6b6244;text-transform:uppercase}
+.tc.lost .tm,.tc.lost .td{color:#8f8668}
+#txChoices{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+#txChoices:empty{display:none}
+.txc{text-align:left;padding:10px 12px;border-radius:8px;border:1px solid #5a6152;background:transparent;cursor:pointer;font:inherit;color:inherit}
+.txc:hover{background:#2e332a}
+.logp{padding:16px;border-radius:10px;background:#22251f;border:1px solid var(--line)}
+.logp h2{margin:0 0 6px;font:700 18px/1.2 var(--f-label);letter-spacing:.14em}
+.logp p{margin:0 0 10px;color:var(--ink-dim)}
+#logRow{display:flex;gap:8px;flex-wrap:wrap}
+#logIn{flex:1 1 220px;min-width:0;background:#10110e;color:var(--ink);border:1px solid #4b5246;border-radius:6px;padding:10px;font:18px var(--f-mono)}
+#logMsg{min-height:1.6em;margin:8px 0 0;font-size:14px}
+#logMsg.err{color:var(--alert)}
+.toast{position:fixed;left:max(16px,env(safe-area-inset-left,0px));max-width:min(360px,calc(100vw - 32px));padding:10px 14px;border-radius:8px;background:#24271f;border:1px solid var(--lamp-dim);z-index:40;font-size:14px}
+.toast b{font:400 16px var(--f-mono);color:var(--lamp)}
+.dayov{background:rgba(10,10,8,.96);opacity:0;transition:opacity .6s;cursor:pointer;text-align:center}
+.dayov.show{opacity:1}
+.dayov .big{font:700 clamp(44px,12vw,96px)/1 var(--f-label);letter-spacing:.12em;color:var(--lamp)}
+.dayov .sub{margin-top:12px;color:var(--ink-dim);font-size:16px}
+.book dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;margin:10px 0 0}
+.book dt{font:400 15px/1.6 var(--f-mono);color:var(--lamp)}
+.book dd{margin:0}
+.book .dn{grid-column:1/-1;font:700 12px var(--f-label);letter-spacing:.16em;color:var(--ink-dim);text-transform:uppercase;margin-top:8px}
+.endcard{text-align:center}
+.endcard .q{font:400 clamp(20px,4vw,28px)/1.4 var(--f-mono);color:var(--lamp);margin:6px 0 14px}
+.endcard .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+.ph-h .textbtn{margin-left:auto;flex:none}
+.ph-h>div:nth-child(2){min-width:0}
+.badge{flex:none;min-width:20px;height:20px;padding:0 6px;border-radius:10px;background:var(--lamp);color:#1a1204;font:700 12px/20px var(--f-label);text-align:center}
+.phone.min #msgs,.phone.min #choices{display:none}
+.phone.min .ph-h{border-bottom:0}
+.daychip{flex:none;margin-top:1px;padding:0 8px;border-radius:3px;background:var(--lamp);color:#1a1204;font:700 12px/20px var(--f-label);letter-spacing:.14em}
+.tapewrap .lab label{display:flex;gap:6px;align-items:center;text-transform:none;letter-spacing:.04em;font:12px var(--f-body);cursor:pointer}
+.tdy{flex:none;align-self:stretch;display:grid;place-items:center;margin:0 10px;padding:0 4px;border-left:2px solid #7a2f12;font:700 11px var(--f-label);letter-spacing:.2em;color:#7a2f12;writing-mode:vertical-rl;transform:rotate(180deg)}
+.td.lost{color:#8f8668}
+.cp-q{margin:0 0 10px;color:var(--ink-dim);font-size:14px}
+#copyForm{display:flex;flex-wrap:wrap;gap:8px}
+#copyIn{flex:1 1 200px;min-width:0;background:#10110e;color:var(--ink);border:1px solid #4b5246;border-radius:6px;padding:10px 12px;font:20px var(--f-mono);letter-spacing:.06em;text-transform:uppercase}
+#copyMsg{min-height:1.6em;margin:10px 0 0;font-size:14px}
+#copyMsg.err{color:var(--alert)}#copyMsg.good{color:var(--ok)}
+.mcard{max-width:460px}.mbtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.mbtns .textbtn{padding:9px 14px}
+#autoBtn{margin-left:auto}
+/* 电码表与结束卡 */
+.ov{position:fixed;inset:0;z-index:30;display:grid;place-items:center;padding:16px;background:rgba(10,10,8,.84)}
+.ov .card{width:100%;max-width:720px;max-height:88vh;overflow:auto;padding:18px;border-radius:10px;background:#24271f;border:1px solid #3a3f36}
+.ov .card header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:6px}
+.ov h2{margin:0;font:700 20px/1.2 var(--f-label);letter-spacing:.14em}
+.ov p{margin:0 0 12px;font-size:13px;color:var(--ink-dim)}
+#chartGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:6px}
+.cell{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;background:#1c1f19}
+.cell b{font:400 20px/1 var(--f-mono);min-width:1ch}
+.cell .sym.dot{width:8px;height:8px}
+.cell .sym.dash{width:22px;height:8px;border-radius:4px}
+.cell .ss{display:flex;gap:4px;align-items:center}
+.cell.use{background:#3a3220;box-shadow:inset 0 0 0 1px var(--lamp-dim)}
+.end dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px 14px;margin:10px 0 14px}
+.end dt{font:400 15px/1.6 var(--f-mono);color:var(--lamp)}
+.end dd{margin:0}
+.end p{margin:0}
+@media (prefers-reduced-motion:reduce){.obj .dot{animation:none}#patRow.shake{animation:none}}
+</style>
+<div class="lang"><button class="textbtn" id="langBtn" aria-haspopup="menu" aria-expanded="false" aria-controls="langMenu">言語 ▾</button><div class="langmenu" id="langMenu" role="menu" aria-label="言語" hidden><a role="menuitem" href="inbetween-en.html" rel="noopener">English</a><a role="menuitem" aria-current="true" class="cur">日本語</a><a role="menuitem" href="inbetween-cn.html"  rel="noopener">中文</a></div></div>
+<button class="textbtn booktab" id="bookBtn" hidden>ノート</button>
+<div class="wrap">
+  <div class="main">
+    <p class="obj" role="status" aria-live="polite"><span class="dot"></span><span id="objective"></span></p>
+
+    <section class="set" aria-label="古い無線機">
+      <i class="screw tl"></i><i class="screw tr"></i><i class="screw bl"></i><i class="screw br"></i>
+      <div class="plate">
+        <div class="brand"><b>KR-40</b><span>短波トランシーバー · 40 mバンド</span></div>
+        <div class="plate-r">
+          <button class="textbtn" id="chartBtn" hidden>モールス符号表</button>
+          <span class="lab">電源</span>
+          <button class="pwr" id="power" aria-pressed="false" aria-label="電源スイッチ" disabled><span class="lamp"></span></button>
+        </div>
+      </div>
+
+      <div class="display" id="display">
+        <div>
+          <div class="freq"><span id="freqNum">-.----</span><small>MHz</small></div>
+          <div class="modes"><span class="chip cw">CW</span><span class="chip" id="rxLamp">受信</span><span class="chip tx" id="txLamp">送信</span></div>
+        </div>
+        <svg class="meter" viewBox="0 0 200 118" role="img" aria-label="信号強度メーター">
+          <path class="arc" d="M 37 55 A 80 80 0 0 1 163 55"/>
+          <g id="ticks"></g>
+          <line class="needle" id="needle" x1="100" y1="104" x2="100" y2="38" transform="rotate(-52 100 104)"/>
+          <circle class="hub" cx="100" cy="104" r="5"/>
+        </svg>
+      </div>
+
+      <div class="tapewrap">
+        <span class="lab">ペーパーテープ <i>横にスクロール、またはドラッグで過去を見返せます</i></span>
+        <div class="tape"><div class="tape-scroll" id="tapeScroll" tabindex="0" aria-label="ペーパーテープ（横にスクロールできます）"><div class="tape-in" id="tapeIn"></div></div></div>
+        <div class="tapebar">
+          <label><input type="checkbox" id="decode" checked> テープを文字に自動変換する</label>
+          <button class="textbtn" id="replayBtn" disabled>直前の信号をもう一度聞く</button>
+        </div>
+      </div>
+
+      <div class="ctl">
+        <div class="ctl-h"><span class="lab">同調</span><span class="note" id="tuneNote">先に電源を入れてください</span></div>
+        <div class="dialbox">
+          <div class="ticks major"></div>
+          <div class="ticks"></div>
+          <input type="range" id="tune" min="7" max="7.04" step="0.0001" value="7.001" disabled aria-label="同調スライダー（周波数 MHz）">
+          <div class="nums"><span>7.000</span><span>7.010</span><span>7.020</span><span>7.030</span><span>7.040</span></div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="fine"><button class="textbtn" id="tuneDn" disabled>◀ 微調整</button><button class="textbtn" id="tuneUp" disabled>微調整 ▶</button></div>
+        <label class="vol"><span class="lab">音量</span><input type="range" id="vol" min="0" max="100" value="55" aria-label="音量"></label>
+      </div>
+
+      <button class="key off" id="keyBtn" aria-label="電鍵"><span>電鍵</span><small id="keyHint">まだ使いません</small></button>
+    </section>
+
+    <section class="send" id="send" hidden>
+      <h2 id="txTitle">送信</h2>
+      <div id="txChoices"></div>
+      <div id="tgtRow" aria-label="送るメッセージ"></div>
+      <div id="patRow"></div>
+      <div class="press" aria-hidden="true"><div id="fill"></div></div>
+      <div class="pl"><span>短く押す = 短点（・）</span><span>中央の線を超える = 長点（—）</span></div>
+      <p id="sendMsg" role="status"></p>
+      <div class="opts">
+        <label>送信速度
+          <select id="speed"><option value="0.16">遅い（約7 WPM）</option><option value="0.12" selected>普通（約10 WPM）</option><option value="0.09">速い（約13 WPM）</option></select>
+        </label>
+        <label><input type="checkbox" id="hint" checked> 今の文字の符号を表示する</label>
+        <button class="textbtn" id="autoBtn">代わりに送信してもらう</button>
+      </div>
+    </section>
+
+    <section class="logp" id="logp" hidden>
+      <h2>通信記録</h2>
+      <p id="logPrompt"></p>
+      <div id="logRow"><input type="text" id="logIn" autocomplete="off" spellcheck="false" aria-label="通信記録の入力"><button class="textbtn" id="logOk">書き留める</button></div>
+      <p id="logMsg" role="status"></p>
+    </section>
+
+    <section class="send endcard" id="endCard" hidden>
+      <h2>おわり</h2>
+      <p class="q" id="endQ"></p>
+      <div class="row"><button class="textbtn" id="endBook">ノート</button><button class="textbtn" id="replay">もう一度遊ぶ</button></div>
+    </section>
+  </div>
+
+  <aside class="phone" id="phone" aria-label="Moとのチャット">
+    <div class="ph-h"><div class="av">M</div><div><b>Mo</b><span id="phSt">オフライン · 無線家</span></div><span class="badge" id="phBadge" hidden></span><button class="textbtn" id="phMin" aria-expanded="true" aria-controls="msgs">最小化</button></div>
+    <div id="msgs"></div>
+    <div id="choices"></div>
+  </aside>
+</div>
+
+<div class="ov" id="chartOv" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-label="モールス符号表">
+    <header><h2>モールス符号表</h2><button class="textbtn" id="chartClose">閉じる</button></header>
+    <p>これまでに使った文字と数字がハイライトされます。</p>
+    <div id="chartGrid"></div>
+  </div>
+</div>
+
+<div class="bookpanel book" id="bookOv" role="dialog" aria-label="無線ノート" hidden>
+  <header><h2>ノート</h2><button class="textbtn" id="bookClose">閉じる</button></header>
+  <p>これまでに出会った用語を、出会った順に並べています。</p>
+  <dl id="bookList"></dl>
+</div>
+
+<div class="ov dayov" id="dayOv" hidden><div><div class="big" id="dayBig"></div><div class="sub" id="daySub"></div></div></div>
+
+<div class="ov" id="resumeOv" hidden>
+  <div class="card" role="dialog" aria-modal="true" aria-label="続きから">
+    <header><h2>おかえりなさい</h2></header>
+    <p id="resumeTxt"></p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button class="textbtn" id="resumeGo"></button><button class="textbtn" id="resumeNew">1日目から始める</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+'use strict';
+const FAST = !!window.__FAST;           // test mode: everything runs quickly
+const SPD = FAST ? 0.05 : 1;
+
+const CONFIG = { stationCall:'VESPER', playerCall:'ZZ1HAM', freq:7.0300, startFreq:7.0010, pitch:650 };
+
+const MORSE = {
+  A:'.-',B:'-...',C:'-.-.',D:'-..',E:'.',F:'..-.',G:'--.',H:'....',I:'..',J:'.---',K:'-.-',L:'.-..',M:'--',
+  N:'-.',O:'---',P:'.--.',Q:'--.-',R:'.-.',S:'...',T:'-',U:'..-',V:'...-',W:'.--',X:'-..-',Y:'-.--',Z:'--..',
+  0:'-----',1:'.----',2:'..---',3:'...--',4:'....-',5:'.....',6:'-....',7:'--...',8:'---..',9:'----.',
+  '.':'.-.-.-'
+};
+const REV = {};
+Object.keys(MORSE).forEach(k => { REV[MORSE[k]] = k; });
+
+const $ = id => document.getElementById(id);
+const E = {};
+['power','display','freqNum','tune','tuneDn','tuneUp','tuneNote','vol','needle','rxLamp','txLamp','tapeScroll','tapeIn',
+ 'objective','keyBtn','keyHint','send','txTitle','txChoices','tgtRow','patRow','fill','sendMsg','speed','hint','autoBtn',
+ 'chartBtn','chartOv','chartGrid','chartClose','bookBtn','bookOv','bookList','bookClose','phone','phSt','phMin','phBadge',
+ 'msgs','choices','endCard','endQ','endBook','replay','ticks','decode','replayBtn','logp','logPrompt','logIn','logOk','logMsg',
+ 'dayOv','dayBig','daySub','resumeOv','resumeTxt','resumeGo','resumeNew','toast'].forEach(id => { E[id] = $(id); });
+
+const wait = ms => new Promise(r => setTimeout(r, FAST ? Math.min(ms, 30) : ms));
+const tv = x => (typeof x === 'function' ? x() : x);
+function setObjective(t) { E.objective.textContent = tv(t); }
+
+/* ================= Audio ================= */
+let ac = null, master = null, noiseGain = null, sideOsc = null, sideGain = null;
+let V = null;                    // the one distant station, VESPER
+let powered = false;
+let tuned = CONFIG.startFreq;
+
+function masterLevel() { return Math.pow(E.vol.value / 100, 1.6) * 0.9; }
+
+function initAudio() {
+  if (ac) return;
+  const AC = window.AudioContext || window.webkitAudioContext;
+  ac = new AC();
+  master = ac.createGain();
+  master.gain.value = 0;
+  master.connect(ac.destination);
+
+  const len = ac.sampleRate * 2;
+  const buf = ac.createBuffer(1, len, ac.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  const src = ac.createBufferSource();
+  src.buffer = buf; src.loop = true;
+  const bp = ac.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.35;
+  noiseGain = ac.createGain(); noiseGain.gain.value = 0;
+  src.connect(bp); bp.connect(noiseGain); noiseGain.connect(master);
+  src.start();
+
+  sideOsc = ac.createOscillator(); sideOsc.type = 'sine'; sideOsc.frequency.value = CONFIG.pitch;
+  sideGain = ac.createGain(); sideGain.gain.value = 0;
+  sideOsc.connect(sideGain); sideGain.connect(master); sideOsc.start();
+
+  V = { amp:0, live:false, fxMode:null, run:0, timers:[] };
+  V.osc = ac.createOscillator(); V.osc.type = 'sine'; V.osc.frequency.value = CONFIG.pitch;
+  V.key = ac.createGain(); V.key.gain.value = 0;
+  V.fx = ac.createGain(); V.fx.gain.value = 1;
+  V.lvl = ac.createGain(); V.lvl.gain.value = 0;
+  V.osc.connect(V.key); V.key.connect(V.fx); V.fx.connect(V.lvl); V.lvl.connect(master); V.osc.start();
+}
+
+function setPower(on) {
+  powered = on;
+  E.power.classList.toggle('on', on);
+  E.power.setAttribute('aria-pressed', String(on));
+  E.display.classList.toggle('on', on);
+  if (on) {
+    initAudio();
+    if (ac.resume) ac.resume();
+    master.gain.setTargetAtTime(masterLevel(), ac.currentTime, 0.1);
+    applyTune();
+    if (tuning) {
+      enableTune(true);
+      E.tuneNote.textContent = tuning.note;
+      if (tuning.bc) beacon(tuning.bc.text, tuning.bc);
+    }
+  } else {
+    silence();
+    if (master) master.gain.setTargetAtTime(0, ac.currentTime, 0.15);
+    enableTune(false);
+    E.freqNum.textContent = '-.----';
+    E.tuneNote.textContent = '電源オフ';
+  }
+  setCanReplay(canReplay);
+}
+const powerWaiters = [];
+function waitPower(state) {
+  return new Promise(res => {
+    const check = () => { if (powered === state) res(); else powerWaiters.push(check); };
+    check();
+  });
+}
+E.power.addEventListener('click', () => {
+  if (E.power.disabled) return;
+  setPower(!powered);
+  powerWaiters.splice(0).forEach(f => f());
+});
+async function whenPowered() {
+  if (powered) return;
+  const prev = E.objective.textContent;
+  setObjective('無線機の電源が切れています。もう一度入れてください。');
+  E.power.disabled = false;
+  await waitPower(true);
+  setObjective(prev);
+}
+
+function sidetone(on) {
+  if (!ac) return;
+  sideGain.gain.cancelScheduledValues(ac.currentTime);
+  sideGain.gain.setTargetAtTime(on ? 0.3 : 0, ac.currentTime, on ? 0.004 : 0.006);
+}
+
+/* ---- Morse timing. Text may contain {XYZ}: those letters are lost in the noise. ---- */
+function buildEvents(raw, unit) {
+  let text = '', lost = [], inLost = false;
+  for (const ch of raw) {
+    if (ch === '{') inLost = true;
+    else if (ch === '}') inLost = false;
+    else { text += ch; lost.push(inLost && ch !== ' '); }
+  }
+  const ev = []; let t = 0, idx = 0;
+  const words = text.split(' ');
+  words.forEach((w, wi) => {
+    [...w].forEach((ch, ci) => {
+      const code = MORSE[ch], isLost = lost[idx];
+      [...code].forEach((s, si) => {
+        const dur = s === '.' ? unit : unit * 3;
+        ev.push({ t, dur, sym:s, lost:isLost });
+        t += dur;
+        if (si < code.length - 1) t += unit;
+      });
+      ev.push({ t, mark:'letter', ch, lost:isLost });
+      if (ci < w.length - 1) t += 3 * unit;
+      idx++;
+    });
+    idx++; // the space
+    ev.push({ t, mark:'word' });
+    if (wi < words.length - 1) t += 7 * unit;
+  });
+  if (ev.length) ev[0].start = true;
+  return { ev, total:t, text };
+}
+
+/* ---- VESPER's transmitter ---- */
+function silence() {
+  if (!V) return;
+  if (V.pend) { const f = V.pend; V.pend = null; f(false); }
+  V.run++;
+  V.timers.forEach(clearTimeout); V.timers = [];
+  V.key.gain.cancelScheduledValues(ac.currentTime);
+  V.key.gain.setValueAtTime(0, ac.currentTime);
+  V.fxMode = null; V.live = false;
+}
+let lastRx = null;
+function schedule(text, o) {
+  const unit = (o.unit || 0.095) * SPD;
+  const { ev, total } = buildEvents(text, unit);
+  const run = V.run, t0 = ac.currentTime + 0.15, g = V.key.gain;
+  ev.forEach(e => {
+    if (e.sym && !e.lost) {
+      const s = t0 + e.t;
+      g.setValueAtTime(0, s);
+      g.linearRampToValueAtTime(1, s + 0.006);
+      g.setValueAtTime(1, s + e.dur);
+      g.linearRampToValueAtTime(0, s + e.dur + 0.006);
+    }
+    V.timers.push(setTimeout(() => { if (V.run === run) onTape(e); }, 150 + e.t * 1000));
+  });
+  return { total, run };
+}
+/* play once; resolves when finished */
+function transmit(text, o = {}) {
+  return new Promise(res => {
+    silence();
+    V.live = true; V.fxMode = o.fx || null; V.join = !!o.join;
+    if (!o.replay) lastRx = { text, o };
+    const { total, run } = schedule(text, o);
+    V.pend = res;
+    V.timers.push(setTimeout(() => {
+      if (V.run !== run) return;
+      V.live = false; V.fxMode = null; V.pend = null; res(true);
+    }, 150 + total * 1000 + 250));
+  });
+}
+/* repeat until silence() is called */
+function beacon(text, o = {}) {
+  silence();
+  V.live = true; V.fxMode = o.fx || null;
+  const run = V.run;
+  const again = () => {
+    if (V.run !== run) return;
+    const { total } = schedule(text, o);
+    V.timers.push(setTimeout(again, 150 + total * 1000 + (o.gap || 3.4) * 1000 * SPD));
+  };
+  again();
+}
+
+/* ================= Paper tape ================= */
+const tape = { cells:[], unlocked:false, src:null };
+function lastCell() { return tape.cells[tape.cells.length - 1]; }
+function openCell() {
+  let c = lastCell();
+  if (!c || c.k !== 'l' || c.done) { c = { k:'l', m:'', ch:'', done:false, lost:false }; tape.cells.push(c); }
+  return c;
+}
+function renderTape() {
+  const sc = E.tapeScroll;
+  const atEnd = sc.scrollLeft + sc.clientWidth >= sc.scrollWidth - 30;
+  if (!tape.cells.length) { E.tapeIn.innerHTML = '<span class="tape-empty">まだ何も受信していません。</span>'; return; }
+  const show = tape.unlocked && E.decode.checked;
+  E.tapeIn.innerHTML = tape.cells.map(c => {
+    if (c.k === 'day') return `<span class="tday">${c.label}</span>`;
+    if (c.k === 's') return '<span class="ts"></span>';
+    if (c.k === 'w') return '<span class="tw"></span>';
+    if (c.lost) return '<span class="tc lost"><span class="tm">▒▒</span><span class="td">_</span></span>';
+    const m = c.m.replace(/\./g, '·').replace(/-/g, '—');
+    const d = c.done ? (tape.unlocked ? (show ? c.ch : '') : '?') : '';
+    return `<span class="tc"><span class="tm">${m}</span><span class="td${tape.unlocked ? '' : ' locked'}">${d}</span></span>`;
+  }).join('');
+  if (atEnd) sc.scrollLeft = sc.scrollWidth;
+}
+E.decode.addEventListener('change', renderTape);
+function tapeDay(label) {
+  tape.cells.push({ k:'day', label });
+  tape.src = null;
+  renderTape();
+  E.tapeScroll.scrollLeft = E.tapeScroll.scrollWidth;
+}
+function onTape(e) {
+  if (!V || !V.live || V.amp < 0.25) return;
+  if (e.start) {
+    const lc = lastCell();
+    if (lc && lc.k === 'l' && !lc.done) lc.done = true;
+    if (V.join) { if (lc && lc.k === 'l') tape.cells.push({ k:'w' }); }
+    else if (tape.cells.length && !['s', 'day'].includes(lastCell().k)) tape.cells.push({ k:'s' });
+  }
+  if (e.lost) {
+    if (e.mark === 'letter') { tape.cells.push({ k:'l', m:'', ch:'', done:true, lost:true }); renderTape(); }
+    return;
+  }
+  if (e.sym) openCell().m += e.sym;
+  else if (e.mark === 'letter') {
+    const c = openCell();
+    if (c.m) { c.ch = e.ch; c.done = true; } else tape.cells.pop();
+  } else if (e.mark === 'word') {
+    const lc = lastCell();
+    if (lc && lc.k === 'l' && lc.done) tape.cells.push({ k:'w' });
+  }
+  renderTape();
+}
+(function tapeDrag() {
+  const sc = E.tapeScroll; let x0 = 0, s0 = 0, drag = false;
+  sc.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'mouse') return;
+    drag = true; x0 = e.clientX; s0 = sc.scrollLeft; sc.classList.add('drag');
+    try { sc.setPointerCapture(e.pointerId); } catch (_) {}
+  });
+  sc.addEventListener('pointermove', e => { if (drag) sc.scrollLeft = s0 - (e.clientX - x0); });
+  const end = () => { drag = false; sc.classList.remove('drag'); };
+  sc.addEventListener('pointerup', end); sc.addEventListener('pointercancel', end);
+})();
+
+/* ================= Meter ================= */
+(function drawTicks() {
+  const labels = ['1','3','5','7','9','+20','+40'];
+  let html = '';
+  labels.forEach((t, i) => {
+    const a = (-52 + 104 * i / 6) * Math.PI / 180;
+    const s = Math.sin(a), c = Math.cos(a);
+    html += `<line class="tk" x1="${100+72*s}" y1="${104-72*c}" x2="${100+80*s}" y2="${104-80*c}"/>`;
+    html += `<text class="tx" x="${100+58*s}" y="${104-58*c+3}">${t}</text>`;
+  });
+  E.ticks.innerHTML = html;
+})();
+
+/* ================= Tuning ================= */
+let tuning = null;     // { beacon, t0, moves, hold, scanMs, resolve }
+function enableTune(on) { E.tune.disabled = E.tuneDn.disabled = E.tuneUp.disabled = !on; }
+function applyTune() {
+  tuned = parseFloat(E.tune.value);
+  if (powered) E.freqNum.textContent = tuned.toFixed(4);
+  if (!ac || !V) return;
+  const d = tuned - CONFIG.freq;
+  V.amp = Math.max(0, 1 - Math.abs(d) / 0.0025);
+  V.lvl.gain.setTargetAtTime(V.amp * 0.45, ac.currentTime, 0.03);
+  V.osc.frequency.setTargetAtTime(CONFIG.pitch + d * 160000, ac.currentTime, 0.02);
+}
+function userTuned() { if (tuning) tuning.moves++; applyTune(); }
+E.tune.addEventListener('input', userTuned);
+function nudge(dir) {
+  E.tune.value = Math.min(7.04, Math.max(7, tuned + dir * 0.0005)).toFixed(4);
+  userTuned();
+}
+E.tuneDn.addEventListener('click', () => nudge(-1));
+E.tuneUp.addEventListener('click', () => nudge(1));
+E.vol.addEventListener('input', () => { if (master && powered) master.gain.setTargetAtTime(masterLevel(), ac.currentTime, 0.02); });
+
+function tuneOp(o) {
+  return new Promise(res => {
+    E.tune.value = CONFIG.startFreq.toFixed(4); applyTune();
+    enableTune(true);
+    E.tuneNote.textContent = o.note || '7 MHz帯 · ゆっくり回して、音の高さの変化を聴こう';
+    tuning = { beacon:!!o.beacon, bc:o.beacon || null, note:E.tuneNote.textContent, t0:performance.now(), moves:0, hold:0, scanMs:o.scanMs || 0, resolve:res };
+    if (o.beacon) beacon(o.beacon.text, o.beacon);
+  });
+}
+function finishTune() {
+  const t = tuning; tuning = null;
+  silence();
+  enableTune(false);
+  E.tune.value = CONFIG.freq.toFixed(4); applyTune();
+  E.tuneNote.textContent = t.beacon ? 'ダイヤルを回す手を止めた' : '7.030 MHz に合わせた';
+  t.resolve();
+}
+
+/* ---- per frame: meter, fading, interference ---- */
+let needleV = 0, lastTs = performance.now();
+function frame(ts) {
+  const dt = Math.min(0.1, (ts - lastTs) / 1000); lastTs = ts;
+  let mul = 1, nz = 0.085 + 0.045 * (0.5 + 0.5 * Math.sin(ts / 310));
+  if (V) {
+    const m = V.fxMode;
+    if (m === 'fade') mul = 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(ts / 650));
+    else if (m === 'weak') mul = 0.4;
+    else if (m === 'qrm') { mul = 0.7; nz += 0.3 * Math.max(0, Math.sin(ts / 230) * Math.sin(ts / 71 + 1)); }
+    V.fx.gain.setTargetAtTime(mul, ac.currentTime, 0.04);
+  }
+  if (noiseGain) noiseGain.gain.setTargetAtTime(powered ? nz : 0, ac.currentTime, 0.08);
+  const lvl = (V && V.live) ? V.amp * mul : 0;
+  const goal = powered ? Math.min(1, Math.max(0, 0.05 + 0.03 * Math.sin(ts / 370) + 0.02 * Math.sin(ts / 97) + lvl * 0.9)) : 0;
+  needleV += (goal - needleV) * Math.min(1, dt * 8);
+  E.needle.setAttribute('transform', `rotate(${-52 + 104 * needleV} 100 104)`);
+  E.rxLamp.classList.toggle('on', powered && lvl > 0.25);
+  if (tuning && powered) {
+    if (tuning.beacon) {
+      if (V && V.amp > 0.5) tuning.hold += dt; else tuning.hold = Math.max(0, tuning.hold - dt * 2);
+      if (tuning.hold > (FAST ? 0.2 : 1.6)) finishTune();
+    } else if (performance.now() - tuning.t0 > tuning.scanMs * (FAST ? 0.02 : 1) && (tuning.moves > 12 || FAST)) finishTune();
+  }
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+
+/* ================= Chat ================= */
+let unread = 0;
+const isMin = () => E.phone.classList.contains('min');
+function updateBadge() {
+  const pending = E.choices.children.length > 0;
+  E.phBadge.hidden = !(isMin() && (unread > 0 || pending));
+  E.phBadge.textContent = unread > 0 ? String(unread) : '!';
+}
+E.phMin.addEventListener('click', () => {
+  const min = E.phone.classList.toggle('min');
+  E.phMin.textContent = min ? 'チャットを開く' : '最小化';
+  E.phMin.setAttribute('aria-expanded', String(!min));
+  if (!min) { unread = 0; scrollChat(); }
+  updateBadge();
+});
+function scrollChat() { E.msgs.scrollTo({ top:E.msgs.scrollHeight, behavior:FAST ? 'auto' : 'smooth' }); }
+function bubble(cls, text) {
+  const b = document.createElement('div');
+  b.className = 'bub ' + cls; b.textContent = text;
+  E.msgs.appendChild(b); scrollChat();
+  return b;
+}
+function sysLine(text) {
+  const d = document.createElement('div'); d.className = 'sys'; d.textContent = text;
+  E.msgs.appendChild(d); scrollChat();
+}
+async function say(who, text) {
+  text = tv(text);
+  if (who === 'mo') {
+    const b = bubble('mo typing', '···');
+    let skip; const sk = new Promise(r => { skip = r; });
+    b.title = 'クリックで待ち時間をスキップ'; b.style.cursor = 'pointer';
+    b.addEventListener('click', () => skip());
+    await Promise.race([wait(1300 + Math.min(text.length * 50, 2800)), sk]);
+    b.classList.remove('typing'); b.textContent = text; b.style.cursor = ''; b.title = '';
+    scrollChat();
+    if (isMin()) { unread++; updateBadge(); }
+    await wait(800);
+  } else { bubble('me', text); await wait(600); }
+}
+function ask(node) {
+  return new Promise(resolve => {
+    const opts = node.options.map(o => Object.assign({}, o));
+    const render = () => {
+      E.choices.innerHTML = '';
+      opts.filter(o => !o.used).forEach(o => {
+        const b = document.createElement('button');
+        b.className = 'choice'; b.textContent = tv(o.label);
+        b.addEventListener('click', async () => {
+          E.choices.innerHTML = ''; updateBadge();
+          await say('me', o.say || o.label);
+          for (const t of (o.reply || [])) await say('mo', t);
+          if (o.next) resolve(); else { o.used = true; render(); }
+        });
+        E.choices.appendChild(b);
+      });
+      updateBadge();
+    };
+    render();
+  });
+}
+
+/* ================= Notebook (terms) ================= */
+const TERMS = {
+  'CW':        [1, 'Continuous Wave（連続波）。電波のオン・オフでモールス符号を送る通信方式。'],
+  'Dot / dash':[1, '長点は短点の3倍の長さ。間隔は、文字の中が1単位、文字と文字の間が3単位、単語と単語の間が7単位。'],
+  'CQ':        [1, '「どなたか応答願います」という、不特定の相手への呼びかけ。'],
+  'DE':        [1, '「こちらは」。後ろに発信者のコールサインが続く。'],
+  'K':         [1, '「どうぞ」。相手に送信を譲る合図。'],
+  'Call sign': [1, '局の識別符号。国を示すプレフィックス、数字、数文字の組み合わせ（例：JA1ABC）。'],
+  'R':         [1, '「了解（受信した）」。略語では「are」の意味にもなる。R U = are you。'],
+  'TNX':       [1, 'Thanks（ありがとう）。TNX 4 = thanks for。'],
+  'QSO':       [1, '無線で2局が交信すること。'],
+  'WX / UR / HR':[1, '天気 / あなたの / ここ。'],
+  'QRM':       [1, '他局や電気ノイズによる混信。'],
+  'SK':        [1, '交信の終了。'],
+  'RST':       [2, '信号の報告。Readability（明瞭度 1〜5）、Strength（強度 1〜9）、Tone（音調 1〜9）。599が最高。'],
+  'QSB':       [2, '信号が強くなったり弱くなったりする現象（フェージング）。'],
+  '73':        [2, '「ご多幸を」（best regards）。交信を締めくくる定番のあいさつ。'],
+  'HW':        [3, 'How。HW R U = お元気ですか。'],
+  'Prefix':    [3, 'コールサインの最初の文字は国を表す。VESPERはどの国にも当てはまらない。'],
+  'QTH':       [4, 'あなたの位置。'],
+  'Coordinates':[4, '緯度は0〜90°、経度は0〜180°まで。それより大きい値は地球上には存在しない。'],
+  'CU / TMW':   [5, 'See you / tomorrow（またね / 明日）。'],
+  'Propagation':[6, '電波は上空で反射して届くので、届くかどうかは状況と運しだい。'],
+  'Direct call':[7, '特定の局を呼ぶには、相手のコールサイン、DE、自分のコールサイン、K の順に送る。'],
+  'DX':        [8, '遠距離交信。海を越えるような交信を指すことが多い。']
+};
+const learned = [];
+let toastT = null;
+function learn(key, quiet) {
+  if (learned.includes(key) || !TERMS[key]) return;
+  learned.push(key);
+  E.bookBtn.hidden = false;
+  if (quiet) return;
+  E.toast.innerHTML = `ノートに追加: <b></b>`;
+  E.toast.querySelector('b').textContent = key;
+  E.toast.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { E.toast.hidden = true; }, FAST ? 200 : 4500);
+}
+function renderBook() {
+  let html = '', day = 0;
+  learned.slice().sort((a, b) => TERMS[a][0] - TERMS[b][0]).forEach(k => {
+    if (TERMS[k][0] !== day) { day = TERMS[k][0]; html += `<div class="dn">${day}日目</div>`; }
+    html += `<dt></dt><dd></dd>`;
+  });
+  E.bookList.innerHTML = html;
+  const dts = E.bookList.querySelectorAll('dt'), dds = E.bookList.querySelectorAll('dd');
+  learned.slice().sort((a, b) => TERMS[a][0] - TERMS[b][0]).forEach((k, i) => { dts[i].textContent = k; dds[i].textContent = TERMS[k][1]; });
+}
+function openBook() { renderBook(); E.bookOv.hidden = false; }
+E.bookBtn.addEventListener('click', () => { if (E.bookOv.hidden) openBook(); else E.bookOv.hidden = true; });
+E.endBook.addEventListener('click', openBook);
+E.bookClose.addEventListener('click', () => { E.bookOv.hidden = true; });
+
+/* ================= Morse chart ================= */
+function shapes(code) {
+  return [...code].map(s => `<span class="sym ${s === '.' ? 'dot' : 'dash'}"></span>`).join('');
+}
+const usedChars = new Set();
+function renderChart() {
+  E.chartGrid.innerHTML = Object.keys(MORSE).sort((a, b) => (isNaN(a) === isNaN(b)) ? (a < b ? -1 : 1) : (isNaN(a) ? -1 : 1))
+    .map(k => `<div class="cell${usedChars.has(k) ? ' use' : ''}"><b>${k}</b><span class="ss">${shapes(MORSE[k])}</span></div>`).join('');
+}
+function openChart() { renderChart(); E.chartOv.hidden = false; E.chartClose.focus(); }
+E.chartBtn.addEventListener('click', openChart);
+E.chartClose.addEventListener('click', () => { E.chartOv.hidden = true; });
+E.chartOv.addEventListener('click', e => { if (e.target === E.chartOv) E.chartOv.hidden = true; });
+
+/* ================= Sending ================= */
+const send = { active:false, text:'', letters:[], idx:0, cur:'', down:false, t0:0, timer:null, unit:0.12, miss:0, forceHint:false, tipped:false, done:null };
+
+function sendMsg(text, cls) { E.sendMsg.textContent = text; E.sendMsg.className = cls || ''; }
+function renderTarget() {
+  E.tgtRow.innerHTML = '';
+  let li = 0;
+  [...send.text].forEach(ch => {
+    const s = document.createElement('span');
+    if (ch === ' ') s.className = 'gap';
+    else { s.className = 'ltr' + (li < send.idx ? ' done' : li === send.idx ? ' cur' : ''); s.textContent = ch; li++; }
+    E.tgtRow.appendChild(s);
+  });
+}
+function renderPattern() {
+  if (send.idx >= send.letters.length) { E.patRow.innerHTML = ''; return; }
+  const ch = send.letters[send.idx], exp = MORSE[ch], typed = send.cur;
+  const hint = E.hint.checked || send.forceHint;
+  let html = `<span class="big">${ch}</span>`;
+  if (hint) {
+    [...exp].forEach((s, i) => {
+      const st = i < typed.length ? (typed[i] === s ? 'ok' : 'bad') : 'ghost';
+      html += `<span class="sym ${s === '.' ? 'dot' : 'dash'} ${st}"></span>`;
+    });
+    for (let i = exp.length; i < typed.length; i++) html += `<span class="sym ${typed[i] === '.' ? 'dot' : 'dash'} bad"></span>`;
+  } else {
+    [...typed].forEach(s => { html += `<span class="sym ${s === '.' ? 'dot' : 'dash'}"></span>`; });
+  }
+  E.patRow.innerHTML = html;
+}
+E.hint.addEventListener('change', renderPattern);
+E.speed.addEventListener('change', () => { send.unit = parseFloat(E.speed.value); });
+
+function keyDown() {
+  if (!send.active || send.down) return;
+  if (!powered) { sendMsg('無線機の電源が切れています。送信するには電源を入れてください。', 'err'); return; }
+  send.down = true; send.t0 = performance.now();
+  clearTimeout(send.timer);
+  if (ac && ac.resume) ac.resume();
+  sidetone(true);
+  E.keyBtn.classList.add('down'); E.txLamp.classList.add('on');
+  E.fill.classList.remove('dash');
+  pressLoop();
+}
+function pressLoop() {
+  if (!send.down) return;
+  const d = performance.now() - send.t0, u = send.unit * 1000;
+  E.fill.style.width = (Math.min(d / (4 * u), 1) * 100) + '%';
+  E.fill.classList.toggle('dash', d >= 2 * u);
+  requestAnimationFrame(pressLoop);
+}
+function keyUp() {
+  if (!send.down) return;
+  send.down = false;
+  const d = performance.now() - send.t0, u = send.unit * 1000;
+  sidetone(false);
+  E.keyBtn.classList.remove('down'); E.txLamp.classList.remove('on');
+  const sym = d < 2 * u ? '.' : '-';
+  send.cur += sym;
+  E.fill.style.width = (Math.min(d / (4 * u), 1) * 100) + '%';
+  E.fill.classList.toggle('dash', sym === '-');
+  renderPattern();
+  send.timer = setTimeout(finishLetter, u * 2.6);
+}
+function finishLetter() {
+  if (!send.cur || !send.active) return;
+  const exp = send.letters[send.idx], pat = send.cur;
+  if (pat === MORSE[exp]) {
+    send.idx++; send.cur = ''; send.miss = 0; send.forceHint = false;
+    renderTarget(); renderPattern();
+    sendMsg(exp + ' を正しく送信しました。', 'good');
+    if (send.idx >= send.letters.length) sendDone();
+  } else {
+    send.miss++; send.cur = '';
+    const got = REV[pat];
+    sendMsg(got ? `${got} を送りました。ここは ${exp} です。もう一度どうぞ。` : `その符号は文字になりません。ここは ${exp} です。もう一度どうぞ。`, 'err');
+    if (send.miss >= 2) send.forceHint = true;
+    renderPattern();
+    E.patRow.classList.remove('shake'); void E.patRow.offsetWidth; E.patRow.classList.add('shake');
+    if (!send.tipped && !send.quiet) {
+      send.tipped = true;
+      say('mo', '落ち着いて。長点は短点の3倍の長さだよ。下のバーを見て、中央の線を超えたら長点になる。');
+    }
+  }
+}
+function sendDone() {
+  send.active = false;
+  clearTimeout(send.timer);
+  E.keyBtn.classList.add('off'); E.keyHint.textContent = '送信済み';
+  E.autoBtn.disabled = true;
+  E.txLamp.classList.add('on');
+  setTimeout(() => E.txLamp.classList.remove('on'), 700);
+  sendMsg('すべて送信しました。', 'good');
+  const d = send.done; send.done = null;
+  setTimeout(() => { if (d) d(); }, 900);
+}
+/* play dots and dashes with the side tone; used by SEND IT FOR ME and by quick montages */
+function autoTone(text, unit, onLetter) {
+  return new Promise(res => {
+    const { ev, total } = buildEvents(text, unit * SPD);
+    const t0 = ac.currentTime + 0.1, g = sideGain.gain;
+    g.cancelScheduledValues(ac.currentTime); g.setValueAtTime(0, ac.currentTime);
+    E.txLamp.classList.add('on');
+    ev.forEach(e => {
+      if (e.sym) {
+        const s = t0 + e.t;
+        g.setValueAtTime(0, s); g.linearRampToValueAtTime(0.3, s + 0.006);
+        g.setValueAtTime(0.3, s + e.dur); g.linearRampToValueAtTime(0, s + e.dur + 0.006);
+      } else if (e.mark === 'letter' && onLetter) setTimeout(onLetter, 100 + e.t * 1000);
+    });
+    setTimeout(() => { E.txLamp.classList.remove('on'); res(); }, 100 + total * 1000 + 250);
+  });
+}
+E.autoBtn.addEventListener('click', async () => {
+  if (!send.active) return;
+  if (!powered) { sendMsg('無線機の電源が切れています。送信するには電源を入れてください。', 'err'); return; }
+  send.active = false; clearTimeout(send.timer); send.cur = '';
+  send.idx = 0; renderTarget(); E.patRow.innerHTML = '';
+  E.keyBtn.classList.add('off'); E.keyHint.textContent = '送信中…';
+  E.autoBtn.disabled = true;
+  sendMsg('代わりに送信しています…', '');
+  await autoTone(send.text, send.unit, () => { send.idx = Math.min(send.letters.length, send.idx + 1); renderTarget(); });
+  send.idx = send.letters.length; renderTarget();
+  send.active = true; sendDone();
+});
+
+function txOp(o) {
+  return new Promise(async res => {
+    E.logp.hidden = true;
+    E.send.hidden = false;
+    E.txTitle.textContent = o.title || '送信';
+    E.txChoices.innerHTML = ''; E.tgtRow.innerHTML = ''; E.patRow.innerHTML = '';
+    E.fill.style.width = '0'; sendMsg('', '');
+    E.keyBtn.classList.add('off'); E.keyHint.textContent = '送る内容を選んでください';
+    E.autoBtn.disabled = true;
+    setCanReplay(true);
+    let text = tv(o.text);
+    if (o.choices) {
+      setObjective(o.objective || '送る内容を選んでください。');
+      text = await new Promise(pick => {
+        o.choices.forEach(c => {
+          const b = document.createElement('button');
+          b.className = 'txc'; b.textContent = c.label;
+          b.addEventListener('click', () => { E.txChoices.innerHTML = ''; pick(tv(c.text)); });
+          E.txChoices.appendChild(b);
+        });
+      });
+    }
+    send.text = text; send.letters = [...text.replace(/ /g, '')];
+    [...text].forEach(ch => usedChars.add(ch));
+    send.idx = 0; send.cur = ''; send.miss = 0; send.forceHint = false; send.tipped = false; send.quiet = !!o.quiet;
+    send.unit = parseFloat(E.speed.value);
+    send.active = true; send.done = () => { setCanReplay(false); res(); };
+    E.keyBtn.classList.remove('off'); E.keyHint.textContent = '押している間だけ送信 · スペースキーでも可';
+    E.autoBtn.disabled = false;
+    setObjective(o.objective ? (o.objective + ' ' + text) : ('スペースキー（または下の電鍵）で送信： ' + text));
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+    renderTarget(); renderPattern();
+    E.send.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  });
+}
+
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { E.chartOv.hidden = true; E.bookOv.hidden = true; return; }
+  const tag = (e.target && e.target.tagName) || '';
+  if (e.code === 'Space' && send.active && E.chartOv.hidden && E.bookOv.hidden && tag !== 'INPUT' && tag !== 'SELECT') {
+    e.preventDefault(); if (!e.repeat) keyDown();
+  }
+});
+window.addEventListener('keyup', e => {
+  if (e.code === 'Space' && send.active && send.down) { e.preventDefault(); keyUp(); }
+});
+E.keyBtn.addEventListener('pointerdown', e => {
+  if (!send.active) return;
+  e.preventDefault();
+  try { E.keyBtn.setPointerCapture(e.pointerId); } catch (_) {}
+  keyDown();
+});
+['pointerup', 'pointercancel'].forEach(n => E.keyBtn.addEventListener(n, () => keyUp()));
+E.keyBtn.addEventListener('contextmenu', e => e.preventDefault());
+window.addEventListener('blur', () => keyUp());
+
+/* ================= Replay the last signal ================= */
+let canReplay = false, replaying = false;
+function setCanReplay(on) { canReplay = on; E.replayBtn.disabled = !on || replaying || !lastRx || !powered; }
+E.replayBtn.addEventListener('click', async () => {
+  if (!canReplay || replaying || !lastRx) return;
+  replaying = true; E.replayBtn.disabled = true;
+  await transmit(lastRx.text, Object.assign({}, lastRx.o, { replay:true }));
+  replaying = false; setCanReplay(canReplay);
+});
+
+/* ================= Log book (copy what you hear) ================= */
+function copyOp(o) {
+  return new Promise(res => {
+    E.send.hidden = true; E.logp.hidden = false;
+    E.logPrompt.textContent = o.prompt; E.logIn.value = ''; E.logMsg.textContent = ''; E.logMsg.className = '';
+    setCanReplay(true);
+    setObjective(o.objective);
+    const norm = s => s.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const go = () => {
+      if ([].concat(o.answer).some(a => norm(a) === norm(E.logIn.value))) {
+        E.logOk.removeEventListener('click', go); E.logIn.removeEventListener('keydown', key);
+        E.logMsg.textContent = '書き留めました。'; E.logMsg.className = '';
+        E.logIn.disabled = true; E.logOk.disabled = true;
+        setCanReplay(false);
+        setTimeout(() => { E.logIn.disabled = false; E.logOk.disabled = false; res(); }, 700);
+      } else {
+        E.logMsg.textContent = 'テープの内容と一致しません。符号表と照らし合わせるか、信号をもう一度聞いてください。';
+        E.logMsg.className = 'err';
+      }
+    };
+    const key = e => { if (e.key === 'Enter') go(); };
+    E.logOk.addEventListener('click', go); E.logIn.addEventListener('keydown', key);
+    E.logIn.focus();
+  });
+}
+
+/* ================= Day cards, saving ================= */
+function saveDay(n) { try { localStorage.setItem('vesper-day', String(n)); } catch (_) {} }
+function loadDay() { try { return parseInt(localStorage.getItem('vesper-day') || '1', 10) || 1; } catch (_) { return 1; } }
+async function dayCard(n, sub) {
+  tape.cells = []; tape.src = null; lastRx = null; renderTape();
+  E.replayBtn.disabled = true; canReplay = false;
+  sysLine(n + '日目');
+  E.send.hidden = true; E.logp.hidden = true; E.endCard.hidden = true;
+  E.dayBig.textContent = 'DAY ' + n; E.daySub.textContent = '';
+  E.dayOv.hidden = false; void E.dayOv.offsetWidth; E.dayOv.classList.add('show');
+  await new Promise(r => {
+    const t = setTimeout(r, FAST ? 30 : 3200);
+    E.dayOv.onclick = () => { clearTimeout(t); r(); };
+  });
+  E.dayOv.classList.remove('show');
+  await wait(600);
+  E.dayOv.hidden = true;
+}
+
+/* ================= Script runner ================= */
+async function powerOp(text) {
+  setObjective(text);
+  E.power.disabled = false;
+  await waitPower(true);
+}
+async function montage(lines, label) {
+  E.send.hidden = true; E.logp.hidden = true;
+  setObjective(label);
+  await whenPowered();
+  for (const l of lines) {
+    if (l.me) { await autoTone(l.me, 0.075); await wait(250); }
+    else { await transmit(l.v, { unit:0.075, fx:l.fx }); await wait(250); }
+  }
+}
+const OPS = {
+  async day(o) { await dayCard(o.n, o.sub); },
+  async objective(o) { setObjective(o.text); },
+  async status(o) { E.phSt.textContent = o.text; },
+  async power(o) { await powerOp(o.text); },
+  async off() { E.send.hidden = true; E.logp.hidden = true; setPower(false); },
+  async tune(o) {
+    E.send.hidden = true; E.logp.hidden = true;
+    setObjective(o.objective);
+    await whenPowered();
+    await tuneOp(o);
+  },
+  async rx(o) {
+    E.send.hidden = true; E.logp.hidden = true;
+    if (o.objective) setObjective(o.objective);
+    await whenPowered();
+    const text = tv(o.text);
+    const go = async () => { let ok = false; while (!ok) { await whenPowered(); ok = await transmit(text, { unit:o.unit, fx:o.fx, join:o.join }); } };
+    if (o.bg) go(); else await go();
+  },
+  async tx(o) { await whenPowered(); await txOp(o); },
+  async poweroff() {
+    E.send.hidden = true; E.logp.hidden = true;
+    setObjective('電源ボタンで無線機の電源を切ってください。');
+    E.power.disabled = false;
+    await waitPower(false);
+  },
+  async copy(o) { await copyOp(o); },
+  async montage(o) { await montage(o.lines, o.objective); },
+  async mo(o) { await say('mo', o.text); },
+  async me(o) { await say('me', o.text); },
+  async ask(o) { await ask(o); },
+  async wait(o) { if (o.objective) setObjective(o.objective); await wait(o.ms); },
+  async learn(o) { learn(o.term); },
+  async unlock() { tape.unlocked = true; renderTape(); },
+  async chart() { E.chartBtn.hidden = false; },
+  async end(o) {
+    E.send.hidden = true; E.logp.hidden = true;
+    E.endQ.textContent = o.text; E.endCard.hidden = false;
+    setObjective('おわり。');
+    E.endCard.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+};
+async function runScript(list) {
+  for (const n of list) await OPS[n.op](n);
+}
+
+/* ================= Language menu ================= */
+(function langMenu() {
+  const btn = document.getElementById('langBtn'), menu = document.getElementById('langMenu');
+  const set = open => { menu.hidden = !open; btn.setAttribute('aria-expanded', String(open)); };
+  btn.addEventListener('click', ev => { ev.stopPropagation(); set(menu.hidden); });
+  document.addEventListener('click', () => set(false));
+  window.addEventListener('keydown', ev => { if (ev.key === 'Escape') set(false); });
+})();
+
+/* ================= The story, nine nights ================= */
+const mo = text => ({ op:'mo', text });
+const me = label => ({ op:'ask', options:[{ label, next:true }] });   // every player line is sent with a click
+const you = label => ({ op:'ask', options:[{ label, next:true }] });
+const L = term => ({ op:'learn', term });
+const pad2 = n => String(n).padStart(2, '0');
+const nowHM = () => { const d = new Date(); return pad2(d.getHours()) + pad2(d.getMinutes()); };
+let vesperTime = '';
+
+const CQ = 'CQ CQ DE VESPER K';
+const HELLO = 'ZZ1HAM DE VESPER K';
+const CALL = 'VESPER DE ZZ1HAM K';
+const R1 = 'ZZ1HAM DE VESPER R R TNX K';
+const DIRECT = 'VESPER VESPER DE ZZ1HAM K';
+const ONLINE = 'オンライン · 無線家';
+
+const OFFLINE = 'オフライン · 無線家';
+
+const DAY1 = [
+  { op:'status', text:OFFLINE },
+  { op:'power', text:'右上の電源ボタンで無線機の電源を入れてください。ヘッドホン推奨。最初は音量を小さめに。' },
+  { op:'tune', objective:'7.000 MHz から 7.040 MHz の間で、同調スライダーを動かしてみましょう。', beacon:{ text:CQ, gap:3.4, unit:0.11 } },
+  { op:'rx', text:CQ, bg:true, objective:'誰かが同じ長短の音を繰り返し送っています。意味はまったく分かりません。Moに聞いてみましょう。' },
+  { op:'status', text:ONLINE },
+  you('ねえMo、いる？じいちゃんの古い無線機から、何か聞こえてきたんだ'),
+  mo('じいちゃんのあの無線機？まだ電源入るのか？'),
+  you('長い音と短い音のパターンが、ずっと繰り返されてるんだ'),
+  mo('長短の音が規則的に続くなら、たぶんモールス信号だな。CWって呼ばれてる。'),
+  L('CW'),
+  mo('今、何MHzに合わせてる？ディスプレイを見てみて。'),
+  { op:'ask', options:[
+    { label:'7.0300 MHz', next:true },
+    { label:'CWって、そもそも何？', say:'ちょっと待って、CWって何？', reply:[
+      'Continuous Wave、連続波の略だよ。送信機が電波をオン・オフして、短いのが「トン」（短点）、長いのが「ツー」（長点）。その組み合わせで文字を作る。',
+      '機械は簡単だし、信号はすごく遠くまで届く。だから今でも使ってる人は多いんだ。' ] }
+  ] },
+  mo('7.03 MHzか。40mバンドのCW帯だな。ここで誰かが送信してるのは普通のことだよ。'),
+  mo('ルールは簡単。短点は1単位の短い音、長点は3単位の長い音、文字と文字の間は3単位あける。'),
+  L('Dot / dash'),
+  mo('解読してあげるよ。ペーパーテープを見てて。'),
+  { op:'unlock' },
+  mo('こう読める：CQ CQ DE VESPER K。'),
+  { op:'chart' },
+  mo('モールス符号表も送っておいた。無線機の右上のボタンから開けるよ。'),
+  mo('CQは「誰か応答して」、DEは「こちらは」、最後のKは「どうぞ」って意味。'),
+  L('CQ'), L('DE'), L('K'),
+  mo('まとめると「どなたかいませんか、どなたかいませんか、こちらVESPER、どうぞ」ってことだ。'),
+  you('VESPERって名前？'),
+  mo('それはコールサイン。局の身分証明みたいなものだよ。'),
+  L('Call sign'),
+  mo('ちゃんとしたコールサインは、国を示すプレフィックスと数字と数文字で、たとえばJA1ABCみたいな形になる。全部文字で、しかも普通の単語なんて……見たことないな。'),
+  mo('おもしろいな。応答してみるか？'),
+  you('どうやって返事するの？'),
+  mo('決まった形式があるんだ。相手のコールサイン、DE、自分のコールサイン、K。'),
+  mo('とりあえず練習用のコールサインZZ1HAMを使おう。送るのは VESPER DE ZZ1HAM K。スペースキーが電鍵だ。ポンと押せば短点、押し続ければ長点。'),
+  you('やってみる'),
+  { op:'tx', title:'呼びかけに応答する', text:CALL },
+  { op:'rx', text:R1, objective:'VESPERが応答しています。' },
+  you('返事が来た！R TNX K って、どういう意味？'),
+  mo('Rは「了解（受信した）」。TNXはThanksの略で「ありがとう」。最後のKはもう一度「どうぞ」だから、こっちが話すのを待ってるんだ。'),
+  L('R'), L('TNX'),
+  mo('こうやって呼びかけと応答が一往復するのを「QSO」、つまり交信って言う。おめでとう、初交信だ。'),
+  L('QSO'),
+  you('次はどうすればいい？'),
+  mo('最初の話題は天気が定番だよ。UR WX K を送ってみて。URは「あなたの」、WXは「天気」。'),
+  L('WX / UR / HR'),
+  { op:'tx', title:'天気をたずねる', text:'UR WX K' },
+  { op:'rx', text:'CLOUDY ALWAYS K', objective:'VESPERが答えています。' },
+  mo('「ALWAYS」？変なこと言うな。'),
+  you('こっちも曇りだって返そう'),
+  mo('WX HR CLOUDY K だ。HRは「ここ」って意味。'),
+  { op:'tx', title:'返事をする', text:'WX HR CLOUDY K' },
+  { op:'rx', text:'QRM', fx:'qrm', objective:'雑音が信号にかぶさっています。' },
+  { op:'wait', ms:1800 },
+  { op:'rx', text:'SK' },
+  { op:'wait', ms:5000, objective:'ノイズだけです。VESPERは消えてしまいました。' },
+  you('QRMって来て、その後に短く何か送ってきて、いなくなっちゃった。今の何？'),
+  mo('QRMは混信のこと。他の局や電気ノイズが信号にかぶさるんだ。それとSKは交信を終えるときの合図。'),
+  L('QRM'), L('SK'),
+  mo('短波ではよくあることさ。心配いらないよ。'),
+  { op:'wait', ms:2000 },
+  mo('心配といえば、最近、市場には行ったか？'),
+  { op:'ask', options:[ { label:'ううん、どうして？', next:true }, { label:'うん、知ってる。', next:true } ] },
+  mo('卵が去年の倍の値段なんだよ。まるでニワトリがローンを抱えてるみたいにさ。'),
+  you('何もかも値上がりしてるよね。家賃もバス代も、全部。'),
+  me('ニュースもそう。世界中がゆっくり崩れていってるみたいだ。'),
+  mo('元気出せよ。お前は田舎に住んでるんだから、最悪、山に引っ越して二度と出てこなきゃいいだけだ。'),
+  you('本当にそんな日が来たら、そんなの全部、何の意味があるんだろう？'),
+  { op:'poweroff' }
+];
+
+const DAY2 = [
+  { op:'day', n:2 },
+  { op:'power', text:'昨日と同じ時間、同じ無線機です。電源を入れましょう。' },
+  { op:'tune', objective:'昨日と同じ周波数、7.0300 MHz に合わせてVESPERを探しましょう。', beacon:{ text:CQ, unit:0.11 } },
+  { op:'rx', text:CQ, objective:'VESPERが呼んでいます。' },
+  { op:'tx', title:'呼びかけに応答する', text:CALL },
+  { op:'rx', text:'ZZ1HAM DE VESPER UR RST 599 K', fx:'fade', objective:'VESPERが答えています。信号が強くなったり弱くなったりしています。' },
+  you('Mo、またVESPERとつながったよ。今度は新しいのが来た、UR RST 599 って？'),
+  mo('それは信号のレポートだよ。RSTはReadability（明瞭度）、Strength（強度）、Tone（音調）のこと。599は最高評価で、完璧に読めて、とても強くて、澄んだ音ってこと。'),
+  L('RST'),
+  mo('つまり、こっちの信号がはっきり届いてるって伝えてるんだ。いいね。'),
+  you('こっちもレポートを返さないとだよね。どう伝えればいい？向こうの信号は強くなったり弱くなったりしてるんだけど。'),
+  mo('短波ではよくあることだよ。信号を反射させる上空の層が、絶えず変化してるからね。'),
+  mo('449って送ればいい。読めるけど安定してない、って意味だ。'),
+  { op:'tx', title:'信号レポートを送る', text:'VESPER DE ZZ1HAM UR RST 449 K' },
+  { op:'rx', text:'TNX FER QSO', fx:'fade', objective:'VESPERが答えています。' },
+  { op:'rx', text:'73 {ZZ1HAM DE VESPER SK}', fx:'qrm', join:true, objective:'信号が完全に途切れていきます。' },
+  { op:'wait', ms:2500, objective:'ノイズだけです。' },
+  you('交信ありがとう、73って来たみたい。意味が分からないよ。しかも今は完全にノイズだけ。'),
+  mo('73は「ご多幸を」、best regardsって意味だ。何かに妨害されたんだろうな。とにかく、同じように返してやれ。'),
+  L('73'),
+  { op:'tx', title:'終わりのあいさつ', text:'73 SK' },
+  { op:'wait', ms:3000, objective:'もうノイズだけです。' },
+  you('送ったよ。'),
+  me('不思議だよね。こんなに通信が発達した今でも、こんな不安定なものを使ってる人がいるなんて。'),
+  mo('不安定なのは確かだ。でも信号は、とんでもない場所から届くこともある。'),
+  mo('今の世の中の流れだと、いつかこの技術が必要になる日が来るかもしれないぞ。'),
+  mo('たとえば……深い山の中に逃げ込んだときとか。'),
+  you('なるほどね。じゃあ次は、サバイバルの達人にもならなきゃ。'),
+  { op:'poweroff' }
+];
+
+const DAY3 = [
+  { op:'day', n:3 },
+  { op:'power', text:'また同じ時間です。電源を入れましょう。' },
+  { op:'tune', objective:'7.0300 MHz に合わせてVESPERを探しましょう。', beacon:{ text:HELLO, unit:0.11 } },
+  { op:'rx', text:HELLO, objective:'VESPERがあなたを呼んでいます。' },
+  { op:'tx', title:'呼びかけに応答する', objective:'返事をして、元気かどうかたずねましょう。HW = how、R = are、U = you：', text:'VESPER DE ZZ1HAM HW R U K' },
+  L('HW'),
+  { op:'rx', text:'FINE HW ABT U OLD FRIEND K', objective:'VESPERが答えています。' },
+  { op:'tx', title:'場所をたずねる', objective:'返事をして、どこにいるのかたずねましょう：', text:'FINE TNX WHERE R U K' },
+  { op:'rx', text:'{WE ARE} IN BETWEEN {K}', fx:'fade', objective:'信号が途切れ途切れになっています。' },
+  you('ねえ、VESPERのこと覚えてる？今日は、どこにいるのか聞いてみたんだ。でも信号がひどく途切れてて、聞き取れたのはIN BETWEENだけだった。'),
+  mo('国と国の「間」ってことじゃないか。国境のすぐ上に局を置いてる人もいるしな。'),
+  you('明日はGPSの位置を聞いてみなきゃ。'),
+  mo('興味が出てきたみたいだな？お前の口から「明日」なんて言葉、初めて聞いたぞ。:)'),
+  you('お前みたいな快楽主義者と、明日みたいな深い話はできないんだよ。'),
+  me(':)'),
+  { op:'poweroff' }
+];
+
+const DAY4 = [
+  { op:'day', n:4 },
+  { op:'power', text:'電源を入れましょう。' },
+  { op:'tune', objective:'7.0300 MHz に合わせてVESPERを探しましょう。', beacon:{ text:HELLO, unit:0.11 } },
+  { op:'rx', text:HELLO, objective:'VESPERがあなたを呼んでいます。' },
+  you('Mo、局の場所ってどうやって正しく聞くの？住所みたいなやつ。'),
+  mo('QTHを聞くんだ。「あなたの位置」って意味。UR QTH K を送ってみて。'),
+  L('QTH'),
+  { op:'tx', title:'場所をたずねる', text:'VESPER DE ZZ1HAM UR QTH K' },
+  { op:'rx', text:'91.204 15.680 K', objective:'VESPERが数字を送っています。' },
+  you('LAT 91.204 LON 15.680'),
+  me('待って……'),
+  mo('ん？それ、座標として成立してないぞ。緯度は90度までしかない。'),
+  L('Coordinates'),
+  mo('打ち間違いかな？'),
+  you('GPSが間違ってるって伝えてみる'),
+  { op:'tx', title:'返事をする', text:'UR GPS WRONG' },
+  { op:'rx', text:'IN BETWEEN', objective:'VESPERが答えています。' },
+  you('またIN BETWEENって。二つの国の間って意味じゃないよ。ただ……IN BETWEEN、なんだ。'),
+  mo('「間」……って、何の？'),
+  you('それをこれから聞くんだ'),
+  { op:'tx', title:'たずねる', text:'IN BETWEEN OF WHAT K' },
+  { op:'rx', text:'CANT SAY SK', objective:'ようやく返事が来ました。' },
+  { op:'wait', ms:3500, objective:'もうノイズだけです。' },
+  you('CANT SAYって言って、交信を終わらせちゃった。'),
+  me('どういう意味なんだろう？IN BETWEENって、アマチュア無線の隠語か何か？'),
+  mo('正直、全然分からない。聞いたことのない言葉だ。'),
+  mo('ちょっと調べてみる。時間をくれ。'),
+  { op:'poweroff' }
+];
+
+const DAY5 = [
+  { op:'day', n:5 },
+  { op:'status', text:'オフライン · 昨日が最後のログイン' },
+  { op:'power', text:'Moは今夜オンラインではありません。電源を入れましょう。' },
+  { op:'tune', objective:'7.0300 MHz に合わせてVESPERを探しましょう。', beacon:{ text:HELLO, unit:0.11 } },
+  { op:'rx', text:HELLO, objective:'VESPERがあなたを呼んでいます。' },
+  { op:'tx', title:'呼びかけに応答する', text:'VESPER DE ZZ1HAM UR QTH IS IN BETWEEN K' },
+  { op:'rx', text:'YES K', objective:'VESPERが答えています。' },
+  { op:'tx', title:'無事かどうかたずねる', text:'R U OK K' },
+  { op:'wait', ms:3000, objective:'返事を待っています。' },
+  { op:'rx', text:'CANT SAY K', objective:'VESPERが答えています。' },
+  { op:'tx', title:'手助けを申し出る', text:'DO U NEED HELP K' },
+  { op:'wait', ms:6000, objective:'返事はありません。' },
+  { op:'wait', ms:5000, objective:'まだ返事はありません。' },
+  { op:'rx', text:'CU TMW SAME TIME 73 SK', objective:'VESPERが去る前に何か言っています。' },
+  L('CU / TMW'),
+  you('ねえ、今日もVESPERと話したよ。IN BETWEENにいるってことは認めた。それで大丈夫かって聞いたら、またCANT SAYって返ってきた。なんだかおかしいよ、Mo。時間があるときに読んで。'),
+  { op:'poweroff' }
+];
+
+const DAY6 = [
+  { op:'day', n:6 },
+  { op:'status', text:ONLINE },
+  mo('友達に聞いてみたけど、VESPERなんてコールサイン、誰も聞いたことがないってさ。IN BETWEENも絶対に無線の隠語じゃない。この話、全部……変だな。'),
+  { op:'power', text:'電源を入れましょう。' },
+  { op:'tune', objective:'7.0300 MHz に合わせてVESPERを探しましょう。', beacon:{ text:HELLO, unit:0.11 } },
+  { op:'rx', text:HELLO, objective:'VESPERがあなたを呼んでいます。' },
+  mo('なあ、今VESPERいる？向こうが今何時か聞いてみてくれ。'),
+  you('なるほど！それでどのタイムゾーンにいるか分かるね。'),
+  { op:'tx', title:'時刻をたずねる', text:'VESPER DE ZZ1HAM WHAT TIME UR QTH K' },
+  { op:'rx', text:() => { vesperTime = nowHM(); return vesperTime + ' K'; }, objective:'VESPERが答えています。' },
+  you(() => vesperTime + 'って言ってる。こっちの時間と同じだ……'),
+  mo('えっ？'),
+  you('信号はとんでもない場所から届くこともあるって言ってたよね。まさか……'),
+  mo('あれは大げさに言っただけだよ……'),
+  { op:'rx', text:'R U THERE K', objective:'VESPERがあなたに何か聞いています。' },
+  { op:'tx', title:'返事をする', objective:'「そこにいますか」と聞かれています。はいと答えましょう：', text:'YES K' },
+  { op:'wait', ms:3000, objective:'あなたは待っています。' },
+  { op:'rx', text:'TNX 4 BEING THERE SK', fx:'fade', objective:'信号が弱まっていきます。' },
+  { op:'wait', ms:3000, objective:'それきりです。' },
+  mo('無線の交信ってのは、逆に言えばほとんど運なんだ。次の瞬間には、俺たちの信号は星々の間に消えてるかもしれない。'),
+  L('Propagation'),
+  you('……意外と詩的なこと言うんだね。'),
+  { op:'poweroff' }
+];
+
+const DAY7 = [
+  { op:'day', n:7 },
+  { op:'power', text:'電源を入れましょう。' },
+  { op:'tune', objective:'7.000 MHz から 7.040 MHz のバンド内でVESPERを探しましょう。', scanMs:15000, note:'探索中… 7.000〜7.040 MHz' },
+  { op:'wait', ms:600, objective:'何もありません。バンド全体を探しました。' },
+  you('Mo、ずっと探してるのにVESPERがいないんだ'),
+  mo('直接呼んでみたらどうだ。相手のコールサイン、DE、自分のコールサイン、K の順に送るんだ。'),
+  L('Direct call'),
+  { op:'tx', title:'VESPERを呼ぶ', text:DIRECT },
+  { op:'wait', ms:8000, objective:'聞いています。ノイズだけです。' },
+  you('やっぱり何もない'),
+  you('ちょっと心配だ'),
+  mo('お前がこんなに何かに夢中になるのは、めったに見ないな。単に忙しいだけって可能性はないか？'),
+  you('分からない。大丈夫かって聞いたとき、CANT SAYって答えたんだ。嫌な予感が消えなくて。'),
+  mo('少なくともCANT SAYだったろ。「うわ、とんでもない災害のど真ん中にいる💥」じゃなくてさ。'),
+  me('……'),
+  you('テキストメッセージじゃなくて、無線でよかったよ。'),
+  { op:'poweroff' }
+];
+
+const DAY8 = [
+  { op:'day', n:8 },
+  { op:'power', text:'電源を入れましょう。' },
+  { op:'tune', objective:'もう一度、バンドを探しましょう。', scanMs:10000, note:'探索中… 7.000〜7.040 MHz' },
+  { op:'tx', title:'VESPERを呼ぶ', text:DIRECT },
+  { op:'wait', ms:8000, objective:'聞いています。ノイズだけです。' },
+  mo('今日も同じか？'),
+  you('うん'),
+  mo('そういうことはあるさ。昔、海の向こうに友達がいてな。ほとんど毎日交信してたのに、ある日突然つながらなくなった。'),
+  L('DX'),
+  you('それで？'),
+  mo('それで？何もない。それだけだ。'),
+  { op:'wait', ms:5000, objective:'言葉が出ません。ノイズだけです。' },
+  { op:'off' }
+];
+
+const DAY9 = [
+  { op:'day', n:9 },
+  { op:'power', text:'電源を入れましょう。' },
+  { op:'tune', objective:'もう一度、バンドを探しましょう。', scanMs:10000, note:'探索中… 7.000〜7.040 MHz' },
+  { op:'tx', title:'VESPERを呼ぶ', text:DIRECT },
+  { op:'wait', ms:5000, objective:'聞いています。ノイズだけです。' },
+  mo('まだVESPERを探してるのか？'),
+  you('もう一回だけ。どうせほかにやることもないし'),
+  mo('わかった。あんまり遅くまで起きてるなよ。俺は寝る。'),
+  you('おやすみ'),
+  { op:'status', text:OFFLINE },
+  { op:'wait', ms:6000, objective:'ノイズが続いています。聞き続けましょう。' },
+  { op:'rx', text:'ZZ1HAM DE VESPER R HW R U OLD FRIEND K', objective:'信号です。' },
+  { op:'wait', ms:1500 },
+  { op:'end', text:'「お元気ですか、旧友よ」' }
+];
+
+const DAYS = { 1:DAY1, 2:DAY2, 3:DAY3, 4:DAY4, 5:DAY5, 6:DAY6, 7:DAY7, 8:DAY8, 9:DAY9 };
+
+async function playFrom(n) {
+  for (let d = n; d <= 9; d++) {
+    await runScript(DAYS[d]);
+    saveDay(d + 1 > 9 ? 1 : d + 1);
+  }
+}
+function restore(n) {
+  tape.unlocked = true; E.chartBtn.hidden = false;
+  Object.keys(TERMS).filter(k => TERMS[k][0] < n).forEach(k => learn(k, true));
+  'CQ DE VESPER K ZZ1HAM R TNX UR WX HR CLOUDY ALWAYS RST 599 449 QRM 73 SK HW U FINE ABT OLD FRIEND WHERE WE ARE IN BETWEEN LAT LON N E GPS WRONG OF WHAT CANT SAY'
+    .split('').forEach(c => { if (c !== ' ') usedChars.add(c); });
+}
+
+E.replay.addEventListener('click', () => { saveDay(1); location.reload(); });
+(function boot() {
+  sysLine('連絡先の中で無線に詳しいのはMoだけだ。');
+  renderTape();
+  const saved = FAST ? 1 : loadDay();
+  if (saved > 1 && saved <= 9) {
+    E.resumeTxt.textContent = '前回は' + saved + '日目の始まりまで進みました。';
+    E.resumeGo.textContent = saved + '日目から続ける';
+    E.resumeOv.hidden = false; E.resumeGo.focus();
+    E.resumeGo.onclick = () => { E.resumeOv.hidden = true; restore(saved); playFrom(saved); };
+    E.resumeNew.onclick = () => { E.resumeOv.hidden = true; playFrom(1); };
+  } else playFrom(1);
+})();
+
+})();
+</script>
+
+</body></html>
